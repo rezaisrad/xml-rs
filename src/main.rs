@@ -26,15 +26,22 @@ error_chain! {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-  let response = reqwest::get(URL).await?.bytes().await?.to_vec();
+  // get response data as bytes
+  let response = reqwest::get(URL).await?.bytes().await?;
 
+  // create two vectors to store buffer for gzip and for xml
   let mut txt = Vec::new();
   let mut buf = Vec::new();
 
+  // Decode gz file and load into buffer
   let mut gz = GzDecoder::new(&response[..]);
   gz.read_to_end(&mut buf)?;
-  let mut reader = Reader::from_reader(Cursor::new(buf));
+
+  // Create reader var for XML data from buffer
+  let mut reader = Reader::from_reader(Cursor::new(&mut buf));
   reader.trim_text(true);
+
+  // Iterate through each xml event
   loop {
           match reader.read_event_into(&mut txt) {
               Ok(Event::Start(e)) => println!("{:?} Tag", e.name().decompose().0),
@@ -43,7 +50,7 @@ async fn main() -> Result<()> {
               Ok(Event::Eof) => break,
               _ => (),
           }
-          txt.clear();
+          txt.clear(); 
       }
 
  Ok(())
