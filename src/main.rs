@@ -1,21 +1,10 @@
+use std::env::args;
 use std::io::Read;
 use std::io::Cursor;
 use error_chain::error_chain;
 use quick_xml::reader::Reader;
 use quick_xml::events::Event;
 use flate2::read::GzDecoder;
-// use reqwest::blocking::Client;
-// use reqwest::blocking::Request;
-
-// #[derive(Debug)]
-// struct XMLInfo {
-//     url: &'static str,
-//     filename:  &'static str,
-//     content_length: u64
-// }
-
-const URL: &str = "http://skoll.whatbox.ca:19869/sample_releases.xml.gz";
-// const CHUNK_SIZE: u32 = 10240; // 10kb chunk-size 
 
 error_chain! {
   foreign_links {
@@ -26,22 +15,31 @@ error_chain! {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-  // get response data as bytes
-  let response = reqwest::get(URL).await?.bytes().await?;
+  let args: Vec<String> = args().collect();
 
-  // create two vectors to store buffer for gzip and for xml
-  let mut txt = Vec::new();
+  let url = &args[1];
+
+  // Download response data as bytes
+  println!("Begin Downloading file from: {}", url);
+  let response = reqwest::get(url).await?.bytes().await?;
+  println!("Completed Request: {} bytes", &response.len());
+  //create vector to store buffer for gzip and for xml
   let mut buf = Vec::new();
 
-  // Decode gz file and load into buffer
+  // Decompress .gz file and load into buffer
+  println!("Begin Loading response to GZIP decoder");
   let mut gz = GzDecoder::new(&response[..]);
   gz.read_to_end(&mut buf)?;
+  println!("Completed reading {} bytes into buffer", &buf.len());
 
   // Create reader var for XML data from buffer
+  println!("Create Reader from Buffer");
   let mut reader = Reader::from_reader(Cursor::new(&mut buf));
   reader.trim_text(true);
 
   // Iterate through each xml event
+  let mut txt = Vec::new();
+  println!("Begin iterating through XML events");
   loop {
           match reader.read_event_into(&mut txt) {
               Ok(Event::Start(e)) => println!("{:?} Tag", e.name().decompose().0),
@@ -52,6 +50,6 @@ async fn main() -> Result<()> {
           }
           txt.clear(); 
       }
-
- Ok(())
+  println!("Completed iterating through XML events");
+  Ok(())
 }
