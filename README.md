@@ -1,6 +1,11 @@
 # Overview
 Rust program to stream [Discogs](https://discogs.com/) [monthly dump data](https://discogs-data-dumps.s3.us-west-2.amazonaws.com/index.html) XML data into the buffer, with the eventual goal of creating an efficient library for streaming gzip xml files into database tables.
 
+Example Usage:
+```
+cargo run -- https://discogs-data-dumps.s3-us-west-2.amazonaws.com/data/2009/discogs_20090205_labels.xml.gz
+```
+
 ## Why this might be useful 
 Having the ability to stream in bytes of data from a gz file directly into a clearable buffer to load into an output (database, parquet files, etc.) will allow for systems with less memory than an XML file size to be able to do a load -- In this case:
 ```
